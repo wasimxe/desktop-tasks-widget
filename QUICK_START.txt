@@ -1,0 +1,82 @@
+================================================================================
+DESKTOP TASKS - QUICK START GUIDE
+================================================================================
+
+STEP 1: Download .NET SDK (BROWSER SHOULD BE OPEN NOW)
+-------------------------------------------------------
+- The download page is now open in your browser
+- Download should start automatically
+- Save the file: dotnet-sdk-8.0.415-win-x64.exe
+- Recommended: Save it to this folder for easier installation
+
+
+STEP 2: Install .NET SDK
+-------------------------
+Option A (If you saved installer to this folder):
+    Double-click: install-and-build.bat
+    (This will install .NET AND build the app automatically!)
+
+Option B (Manual installation):
+    1. Run the downloaded: dotnet-sdk-8.0.415-win-x64.exe
+    2. Follow the installation wizard
+    3. Click "Install" and wait for completion
+    4. Close the installer when done
+
+
+STEP 3: Build the Application
+------------------------------
+After .NET SDK is installed:
+    Double-click: build.bat
+
+
+STEP 4: Run the Application
+----------------------------
+    Double-click: run.bat
+
+    OR
+
+    Open Command Prompt here and type: dotnet run
+
+
+WHAT TO EXPECT WHEN RUNNING:
+================================================================================
+1. NO main window will appear (this is normal!)
+2. Look at the SYSTEM TRAY (bottom-right, near the clock)
+3. You'll see a BLUE CHECKMARK ICON
+4. RIGHT-CLICK the icon to access:
+   - Manage Tasks
+   - Refresh Display
+   - Exit
+
+5. Active tasks will be displayed on your desktop
+
+
+TROUBLESHOOTING:
+================================================================================
+Problem: "dotnet command not found"
+Solution: - Close ALL terminals
+          - Open a NEW command prompt
+          - Try again
+          - If still doesn't work, restart computer
+
+Problem: Build fails
+Solution: Run these commands:
+          dotnet restore
+          dotnet clean
+          dotnet build
+
+
+FILES IN THIS FOLDER:
+================================================================================
+download-dotnet.bat       - Opens download page in browser
+install-and-build.bat     - Installs .NET SDK and builds app (if installer is here)
+build.bat                 - Builds the application
+run.bat                   - Runs the application
+MANUAL_SETUP_GUIDE.md     - Detailed setup instructions
+README.md                 - Full application documentation
+
+
+NEXT STEP:
+================================================================================
+>>> Wait for download to complete, then run: install-and-build.bat <<<
+================================================================================

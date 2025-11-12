@@ -1,0 +1,495 @@
+using System;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Media.Imaging;
+using System.Windows.Media;
+
+namespace DesktopTasks.Windows
+{
+    public partial class DesktopOverlay : Window
+    {
+        private readonly string _htmlFilePath;
+        private readonly string _settingsPath;
+        private readonly string _tempHtmlPath;
+        private bool _isLocked = true;
+        private bool _contentChanged = false;
+
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_TRANSPARENT = 0x00000020;
+        private const int WS_EX_NOACTIVATE = 0x08000000;
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
+        private const int WS_EX_LAYERED = 0x00080000;
+
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hwnd, int index);
+
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hwnd, int index, int newStyle);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumChildWindows(IntPtr hwnd, EnumChildProc enumProc, IntPtr lParam);
+
+        private delegate bool EnumChildProc(IntPtr hwnd, IntPtr lParam);
+
+        public DesktopOverlay()
+        {
+            InitializeComponent();
+
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "DesktopTasks"
+            );
+            Directory.CreateDirectory(appDataPath);
+
+            _htmlFilePath = Path.Combine(appDataPath, "widget.html");
+            _settingsPath = Path.Combine(appDataPath, "widget-settings.txt");
+            _tempHtmlPath = Path.Combine(appDataPath, "widget-temp.html");
+
+            Loaded += DesktopOverlay_Loaded;
+            Closing += DesktopOverlay_Closing;
+
+            // Suppress script errors and context menu
+            HtmlBrowser.LoadCompleted += (s, e) =>
+            {
+                try
+                {
+                    dynamic? activeX = HtmlBrowser.Document;
+                    if (activeX != null)
+                    {
+                        activeX.parentWindow.execScript("window.onerror = function() { return true; }", "javascript");
+
+                        // Disable context menu when locked
+                        if (_isLocked)
+                        {
+                            activeX.parentWindow.execScript(@"
+                                document.oncontextmenu = function() { return false; };
+                                document.body.oncontextmenu = function() { return false; };
+                            ", "javascript");
+
+                            // Make all WebBrowser child windows transparent
+                            MakeWebBrowserTransparent();
+                        }
+                    }
+                }
+                catch { }
+            };
+
+            // Create default content if needed
+            if (!File.Exists(_htmlFilePath))
+            {
+                CreateDefaultContent();
+            }
+
+            LoadSettings();
+        }
+
+        private void DesktopOverlay_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Ensure window handle is created
+            var hwnd = new WindowInteropHelper(this).EnsureHandle();
+
+            SetLockState(_isLocked);
+            if (_isLocked)
+            {
+                RefreshHtmlView();
+            }
+        }
+
+        private void DesktopOverlay_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (_contentChanged && !_isLocked)
+            {
+                var result = MessageBox.Show("You have unsaved changes. Save before closing?",
+                    "Unsaved Changes", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    SaveContent();
+                }
+                else if (result == MessageBoxResult.Cancel)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
+            SaveSettings();
+        }
+
+        public void ToggleLock()
+        {
+            _isLocked = !_isLocked;
+            SetLockState(_isLocked);
+        }
+
+        public bool IsLocked => _isLocked;
+
+        private void SetLockState(bool locked)
+        {
+            _isLocked = locked;
+
+            var hwnd = new WindowInteropHelper(this).Handle;
+            if (hwnd == IntPtr.Zero) return;
+
+            int extendedStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+
+            if (locked)
+            {
+                // Save any changes before locking
+                if (_contentChanged)
+                {
+                    SaveContent();
+                }
+
+                // LOCKED: Show HTML view with transparent overlay for click-through
+                HtmlScrollViewer.Visibility = Visibility.Visible;
+                HtmlBrowser.Visibility = Visibility.Visible;
+                TransparentOverlay.Visibility = Visibility.Visible; // Show overlay on top
+                TransparentOverlay.IsHitTestVisible = false; // Make overlay truly transparent
+                HtmlBrowser.IsHitTestVisible = false; // Disable WebBrowser interaction
+                HtmlScrollViewer.IsHitTestVisible = false; // Disable ScrollViewer interaction
+                MainBorder.IsHitTestVisible = false; // Disable border interaction
+                EditorPanel.Visibility = Visibility.Collapsed;
+
+                // First show the content
+                RefreshHtmlView();
+
+                // Apply click-through window style
+                SetWindowLong(hwnd, GWL_EXSTYLE,
+                    extendedStyle | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW);
+
+                ResizeMode = ResizeMode.NoResize;
+                Cursor = Cursors.Arrow;
+                Focusable = false;
+            }
+            else
+            {
+                // UNLOCKED: Show editor, interactive
+                LoadEditorContent();
+
+                HtmlScrollViewer.Visibility = Visibility.Collapsed;
+                HtmlBrowser.Visibility = Visibility.Collapsed;
+                TransparentOverlay.Visibility = Visibility.Collapsed;
+                HtmlBrowser.IsHitTestVisible = true;
+                HtmlScrollViewer.IsHitTestVisible = true;
+                MainBorder.IsHitTestVisible = true;
+                EditorPanel.Visibility = Visibility.Visible;
+
+                SetWindowLong(hwnd, GWL_EXSTYLE,
+                    (extendedStyle | WS_EX_TOOLWINDOW) & ~WS_EX_TRANSPARENT & ~WS_EX_NOACTIVATE & ~WS_EX_LAYERED);
+                ResizeMode = ResizeMode.CanResize;
+                Cursor = Cursors.Arrow;
+                Focusable = true;
+            }
+
+            SaveSettings();
+        }
+
+        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonDown(e);
+            if (!_isLocked)
+            {
+                try
+                {
+                    DragMove();
+                    SaveSettings();
+                }
+                catch { }
+            }
+        }
+
+        private void LoadEditorContent()
+        {
+            try
+            {
+                if (File.Exists(_htmlFilePath))
+                {
+                    HtmlTextBox.Text = File.ReadAllText(_htmlFilePath);
+                }
+
+                _contentChanged = false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading content: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SaveContent()
+        {
+            try
+            {
+                File.WriteAllText(_htmlFilePath, HtmlTextBox.Text);
+                _contentChanged = false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving content: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void RefreshHtmlView()
+        {
+            try
+            {
+                string html = File.ReadAllText(_htmlFilePath);
+
+                string fullHtml = $@"<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'/>
+    <style>
+        ::-webkit-scrollbar {{ display: none; }}
+        html {{ -ms-overflow-style: none; scrollbar-width: none; }}
+        body {{ margin: 0; padding: 0; overflow-y: auto; overflow-x: hidden; }}
+    </style>
+</head>
+<body>
+    {html}
+</body>
+</html>";
+
+                File.WriteAllText(_tempHtmlPath, fullHtml);
+                HtmlBrowser.Navigate(new Uri(_tempHtmlPath));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading HTML: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void Editor_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            _contentChanged = true;
+        }
+
+        private void SaveChanges_Click(object sender, RoutedEventArgs e)
+        {
+            SaveContent();
+
+            // Automatically lock and show HTML view
+            _isLocked = false; // Set to false so ToggleLock will set it to true
+            SetLockState(true);
+        }
+
+        private void CreateDefaultContent()
+        {
+            string defaultHtml = @"<style>
+    body {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        height: 100%;
+        overflow: hidden;
+    }
+    .widget-container {
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    h2 {
+        color: #2c3e50;
+        font-size: 14px;
+        margin: 15px 0 8px 0;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .task-section {
+        margin-bottom: 20px;
+    }
+    .task-item {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        display: flex;
+        align-items: flex-start;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-left: 4px solid #ddd;
+    }
+    .task-item:hover {
+        transform: translateX(3px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .task-item.high {
+        border-left-color: #e74c3c;
+    }
+    .task-item.normal {
+        border-left-color: #3498db;
+    }
+    .task-item.low {
+        border-left-color: #2ecc71;
+    }
+    .task-checkbox {
+        font-size: 18px;
+        margin-right: 12px;
+        color: #666;
+        flex-shrink: 0;
+    }
+    .task-content {
+        flex: 1;
+    }
+    .task-title {
+        color: #2c3e50;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    .task-meta {
+        color: #7f8c8d;
+        font-size: 11px;
+    }
+    .info-box {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        padding: 12px;
+        border-radius: 8px;
+        color: white;
+        font-size: 12px;
+        margin-top: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .info-box strong {
+        color: #fff;
+    }
+</style>
+
+<div class=""widget-container"">
+    <div class=""task-section"">
+        <h2>&#128293; High Priority</h2>
+        <div class=""task-item high"">
+            <div class=""task-checkbox"">&#9744;</div>
+            <div class=""task-content"">
+                <div class=""task-title"">Complete project presentation</div>
+                <div class=""task-meta"">Due: Today at 5:00 PM</div>
+            </div>
+        </div>
+        <div class=""task-item high"">
+            <div class=""task-checkbox"">&#9744;</div>
+            <div class=""task-content"">
+                <div class=""task-title"">Client meeting preparation</div>
+                <div class=""task-meta"">Due: Tomorrow</div>
+            </div>
+        </div>
+    </div>
+
+    <div class=""task-section"">
+        <h2>&#9889; Normal Priority</h2>
+        <div class=""task-item normal"">
+            <div class=""task-checkbox"">&#9744;</div>
+            <div class=""task-content"">
+                <div class=""task-title"">Review code changes</div>
+                <div class=""task-meta"">Team review pending</div>
+            </div>
+        </div>
+        <div class=""task-item normal"">
+            <div class=""task-checkbox"">&#9744;</div>
+            <div class=""task-content"">
+                <div class=""task-title"">Update documentation</div>
+                <div class=""task-meta"">Due: This week</div>
+            </div>
+        </div>
+        <div class=""task-item normal"">
+            <div class=""task-checkbox"">&#9744;</div>
+            <div class=""task-content"">
+                <div class=""task-title"">Email responses</div>
+                <div class=""task-meta"">5 pending</div>
+            </div>
+        </div>
+    </div>
+
+    <div class=""task-section"">
+        <h2>&#128204; Low Priority</h2>
+        <div class=""task-item low"">
+            <div class=""task-checkbox"">&#9744;</div>
+            <div class=""task-content"">
+                <div class=""task-title"">Organize files</div>
+                <div class=""task-meta"">When free</div>
+            </div>
+        </div>
+    </div>
+
+    <div class=""info-box"">
+        &#128161; <strong>Tip:</strong> Click the tray icon to unlock and edit this widget!
+    </div>
+</div>";
+
+            File.WriteAllText(_htmlFilePath, defaultHtml);
+        }
+
+        private void LoadSettings()
+        {
+            try
+            {
+                if (File.Exists(_settingsPath))
+                {
+                    string[] lines = File.ReadAllLines(_settingsPath);
+                    if (lines.Length >= 5)
+                    {
+                        Left = double.Parse(lines[0]);
+                        Top = double.Parse(lines[1]);
+                        Width = double.Parse(lines[2]);
+                        Height = double.Parse(lines[3]);
+                        _isLocked = bool.Parse(lines[4]);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private void SaveSettings()
+        {
+            try
+            {
+                string[] settings = {
+                    Left.ToString(),
+                    Top.ToString(),
+                    Width.ToString(),
+                    Height.ToString(),
+                    _isLocked.ToString()
+                };
+                File.WriteAllLines(_settingsPath, settings);
+            }
+            catch { }
+        }
+
+        private void MakeWebBrowserTransparent()
+        {
+            try
+            {
+                // Get the WebBrowser control's window handle
+                var browserHandle = ((HwndSource)PresentationSource.FromVisual(HtmlBrowser))?.Handle;
+                if (browserHandle == IntPtr.Zero || browserHandle == null)
+                    return;
+
+                // Apply transparent style to the WebBrowser and all its child windows
+                EnumChildWindows(browserHandle.Value, (hwnd, lParam) =>
+                {
+                    try
+                    {
+                        int extendedStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+                        SetWindowLong(hwnd, GWL_EXSTYLE, extendedStyle | WS_EX_TRANSPARENT);
+                    }
+                    catch { }
+                    return true; // Continue enumeration
+                }, IntPtr.Zero);
+
+                // Also apply to the browser's own handle
+                int browserStyle = GetWindowLong(browserHandle.Value, GWL_EXSTYLE);
+                SetWindowLong(browserHandle.Value, GWL_EXSTYLE, browserStyle | WS_EX_TRANSPARENT);
+            }
+            catch { }
+        }
+    }
+}

@@ -1,0 +1,116 @@
+================================================================================
+ALL .NET SDK 8.0 DOWNLOAD LINKS - TRY THESE IN YOUR WEB BROWSER
+================================================================================
+
+Copy and paste these links into your web browser (Chrome, Edge, Firefox, etc.)
+Try each one until one works. Save the file anywhere, then double-click to install.
+
+================================================================================
+MICROSOFT OFFICIAL LINKS
+================================================================================
+
+1. Short link (redirects to latest):
+https://aka.ms/dotnet/8.0/dotnet-sdk-win-x64.exe
+
+2. Official download page (click the download button):
+https://dotnet.microsoft.com/download/dotnet/8.0
+
+3. Direct installer link (version 8.0.415):
+https://download.visualstudio.microsoft.com/download/pr/b8cf3a22-c62d-4ac2-a835-c03b60cf65db/f14c00b4ec7f5c1d7085abf0e62bb9ee/dotnet-sdk-8.0.415-win-x64.exe
+
+4. Builds server:
+https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.415/dotnet-sdk-8.0.415-win-x64.exe
+
+5. Thank you page (auto-download):
+https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/sdk-8.0.415-windows-x64-installer
+
+
+================================================================================
+ALTERNATIVE SOURCES
+================================================================================
+
+6. Softpedia (reputable software mirror):
+https://www.softpedia.com/get/Programming/Other-Programming-Files/Microsoft-NET-Core.shtml
+
+7. SourceForge mirror:
+https://sourceforge.net/projects/dotnet-sdk.mirror/
+
+8. Partition Wizard tutorial (includes download links):
+https://www.partitionwizard.com/news/net-8-download-install.html
+
+
+================================================================================
+GITHUB RELEASE PAGES
+================================================================================
+
+9. .NET Core releases page:
+https://github.com/dotnet/core/blob/main/release-notes/8.0/8.0.21/8.0.21.md
+
+10. SDK Installer releases:
+https://github.com/dotnet/installer/releases
+
+11. Direct release tag:
+https://github.com/dotnet/installer/releases/tag/v8.0.415
+
+
+================================================================================
+VISUAL STUDIO DOWNLOADS (includes .NET SDK)
+================================================================================
+
+12. Visual Studio Build Tools (includes .NET SDK):
+https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022
+
+13. Visual Studio Community (free, includes .NET SDK):
+https://visualstudio.microsoft.com/vs/community/
+
+
+================================================================================
+INSTRUCTIONS
+================================================================================
+
+TO DOWNLOAD:
+1. Copy ONE link from above
+2. Paste it into your web browser's address bar
+3. Press Enter
+4. Wait for download to start
+5. Save the file
+
+AFTER DOWNLOADING:
+1. Find the downloaded file (usually in Downloads folder)
+2. Double-click the .exe file
+3. Follow installation wizard
+4. After installation completes, come back to:
+   D:\workspace\windows\desktop-tasks
+5. Run: build.bat
+
+
+================================================================================
+WHAT TO DO IF NOTHING WORKS
+================================================================================
+
+If NONE of these links work in your browser:
+
+Option 1: Your network is blocking Microsoft servers
+   - Contact your IT department
+   - Try using mobile hotspot
+   - Try using VPN
+
+Option 2: Download on another computer
+   - Download on a friend's computer or at home
+   - Transfer via USB drive to this computer
+
+Option 3: Use Visual Studio Community (link #13)
+   - This is a full IDE that includes .NET SDK
+   - After installing Visual Studio, the .NET SDK will be available
+
+
+================================================================================
+FILE YOU'RE LOOKING FOR
+================================================================================
+
+Filename: dotnet-sdk-8.0.415-win-x64.exe
+Size: ~200-250 MB
+Version: 8.0.415 (or any 8.0.x version)
+
+
+================================================================================

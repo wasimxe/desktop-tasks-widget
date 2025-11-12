@@ -1,0 +1,3 @@
+@echo off
+echo Starting Desktop Tasks...
+dotnet run

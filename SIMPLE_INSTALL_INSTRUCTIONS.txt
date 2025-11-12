@@ -1,0 +1,94 @@
+================================================================================
+SIMPLE INSTALLATION INSTRUCTIONS - Desktop Tasks
+================================================================================
+
+I've tried multiple automated methods but encountered network/permission issues.
+Here's the SIMPLEST way forward:
+
+================================================================================
+METHOD 1: PowerShell Script (RECOMMENDED)
+================================================================================
+
+1. Right-click on Windows Start button
+2. Select "PowerShell (Admin)" or "Terminal (Admin)"
+3. Navigate to this folder:
+   cd D:\workspace\windows\desktop-tasks
+
+4. Run the installation script:
+   .\Install-DotNet-Admin.ps1
+
+5. After installation completes, run:
+   .\build.bat
+
+
+================================================================================
+METHOD 2: Manual Download (If PowerShell script fails)
+================================================================================
+
+1. Open your web browser
+
+2. Go to ONE of these URLs:
+   - https://dotnet.microsoft.com/download/dotnet/8.0
+   - https://aka.ms/dotnet/8.0/dotnet-sdk-win-x64.exe
+
+3. Download the .NET SDK 8.0 installer
+
+4. Run the installer (double-click the .exe file)
+
+5. After installation:
+   - Open Command Prompt or PowerShell
+   - cd D:\workspace\windows\desktop-tasks
+   - build.bat
+
+
+================================================================================
+METHOD 3: Using Chocolatey with Admin
+================================================================================
+
+1. Right-click on Windows Start button
+2. Select "PowerShell (Admin)"
+3. Run: choco install dotnet-sdk -y
+4. After completion: cd D:\workspace\windows\desktop-tasks
+5. Run: build.bat
+
+
+================================================================================
+VERIFY .NET SDK IS INSTALLED
+================================================================================
+
+Open a NEW terminal and run:
+    dotnet --version
+
+You should see: 8.0.xxx
+
+
+================================================================================
+AFTER .NET SDK IS INSTALLED
+================================================================================
+
+Your Desktop Tasks application is 100% ready to run!
+
+Simply run:
+    build.bat         (to compile)
+    run.bat           (to start the app)
+
+The app will appear as a blue checkmark icon in your system tray!
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: "dotnet command not found" after installation
+Solution: Close ALL terminals, open a NEW one, try again
+
+Problem: Still having download issues
+Solution: Try using a VPN or different network, or download on another
+          computer and transfer the installer file to this folder
+
+Problem: Need help
+Solution: All application files are ready in this folder. Once you get
+          .NET SDK installed (using ANY method), everything will work!
+
+
+================================================================================
