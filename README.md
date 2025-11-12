@@ -136,6 +136,7 @@ This project is licensed under the MIT License.
 ## 👨‍💻 Author
 
 **TanxeStudio**
+- 🌐 Website: [tanxe.com](https://www.tanxe.com)
 - 📧 Email: wasimxe@gmail.com
 - 💬 WhatsApp: +92 345 540 7008
 - 🐙 GitHub: [@TanxeStudio](https://github.com/TanxeStudio)
