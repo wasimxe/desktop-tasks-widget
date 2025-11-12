@@ -1,0 +1,54 @@
+========================================
+QUICK STEPS TO PUBLISH TO GITHUB
+========================================
+
+Your project is ready! Follow these simple steps:
+
+STEP 1: Create GitHub Repository
+---------------------------------
+1. Go to: https://github.com/new
+2. Repository name: desktop-tasks-widget
+3. Description: A beautiful desktop task management widget for Windows
+4. Make it PUBLIC (for job applications)
+5. DO NOT add README, .gitignore, or license
+6. Click "Create repository"
+
+STEP 2: Push Your Code
+-----------------------
+Copy and paste these commands ONE BY ONE:
+
+cd "D:\workspace\windows\desktop-tasks"
+
+git remote add origin https://github.com/TanxeStudio/desktop-tasks-widget.git
+
+git push -u origin master
+
+
+That's it! Your project will be live on GitHub.
+
+STEP 3: Create a Release (IMPORTANT for Downloads)
+---------------------------------------------------
+1. Go to your repository on GitHub
+2. Click "Releases" → "Create a new release"  
+3. Tag: v2.0.0
+4. Title: Desktop Tasks Widget v2.0
+5. Upload: DesktopTasks.zip (from your folder)
+6. Click "Publish release"
+
+STEP 4: Add Topics (for Discoverability)
+-----------------------------------------
+On your repo page, click "About" gear icon, add:
+- wpf
+- csharp  
+- dotnet
+- windows
+- desktop-widget
+- task-management
+- productivity
+
+Your project will now be visible to recruiters and potential clients! ✨
+
+========================================
+
+Website: https://www.tanxe.com
+Contact: wasimxe@gmail.com | WhatsApp: +92 345 540 7008
