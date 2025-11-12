@@ -29,6 +29,9 @@ bld/
 .vs/
 .vscode/
 
+# Claude Code
+.claude/
+
 # ReSharper
 _ReSharper*/
 *.[Rr]e[Ss]harper
