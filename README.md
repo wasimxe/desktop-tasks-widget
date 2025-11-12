@@ -54,7 +54,7 @@
 
 ### Quick Start
 
-1. **Download** the latest release from [Releases](../../releases)
+1. **Download** the latest release from [Releases](https://github.com/wasimxe/desktop-tasks-widget/releases)
 2. **Extract** `DesktopTasks.zip` to a folder
 3. **Run** `DesktopTasks.exe`
 4. **Configure** via system tray icon (blue circle in bottom-right)
@@ -102,8 +102,8 @@ Right-click the tray icon for these options:
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR-USERNAME/desktop-tasks.git
-cd desktop-tasks
+git clone https://github.com/wasimxe/desktop-tasks-widget.git
+cd desktop-tasks-widget
 
 # Build in Release mode
 dotnet build -c Release
@@ -135,11 +135,11 @@ This project is licensed under the MIT License.
 
 ## 👨‍💻 Author
 
-**TanxeStudio**
+**Wasim (TanxeStudio)**
 - 🌐 Website: [tanxe.com](https://www.tanxe.com)
 - 📧 Email: wasimxe@gmail.com
 - 💬 WhatsApp: +92 345 540 7008
-- 🐙 GitHub: [@TanxeStudio](https://github.com/TanxeStudio)
+- 🐙 GitHub: [@wasimxe](https://github.com/wasimxe)
 
 *Built with ❤️ and C#*
 
